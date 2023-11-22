@@ -23,11 +23,9 @@ export default class TAGElement {
         this.Y = parameters.y
         this.ZIndex = "0"
         if (parameters.width) {
-            console.log(parameters.width)
             this.Width = parameters.width
         }
         if (parameters.height) {
-            console.log(parameters.height)
             this.Height = parameters.height 
         }
     }
@@ -151,12 +149,12 @@ export default class TAGElement {
         if (!x) {
             return
         }
-        
-        if (!this.ValidatePX(x)) {
-            console.error("Please provide a valid X with a 'px' component")
-            return
+        const value = this.ValidateX(x)
+        if (value) {
+            this.Element.style.left = x
+        } else {
+            console.error("Please provide a valid value for 'x'")
         }
-        this.Element.style.left = x
     }
     get Y() {
         return this.Element.style.top
@@ -165,12 +163,12 @@ export default class TAGElement {
         if (!y) {
             return
         }
-        
-        if (this.ValidatePX(y)) {
-            console.error("Please provide a valid Y with a 'px' component")
-            return
+        const value = this.ValidatePX(y)
+        if (value) {
+            this.Element.style.top = y
+        } else {
+            console.error("Please provide a valid value for 'y'")
         }
-        this.Element.style.top = y
     }
     get ZIndex() {
         return this.Element.style.zIndex
@@ -187,11 +185,12 @@ export default class TAGElement {
         if (!width) {
             return
         }
-        if (!this.ValidatePX(width)) {
-            console.error("Please provide a valid Width with a 'px' component")
-            return
+        const value = this.ValidatePX(width)
+        if (value) {
+            this.element.style.width = width
+        } else {
+            console.error("Please provide a valid value for 'width'")
         }
-        this.element.style.width = width
     }
     get Height() {
         return this.element.style.height
@@ -200,11 +199,12 @@ export default class TAGElement {
         if (!height) {
             return
         }
-        if (!this.ValidatePX(height)) {
-            console.error("Please provide a valid Height with a 'px' component")
-            return
+        const value = this.ValidatePX(height)
+        if (value) {
+            this.element.style.height = height
+        } else {
+            console.error("Please provide a valid value for 'height'")
         }
-        this.element.style.height = height
     }
 
     InitiateElement() {
@@ -233,11 +233,13 @@ export default class TAGElement {
         this.ParentElement.removeChild(this.Element)
     }
     ValidatePX(value) {
-        if (typeof value != "string" || value.indexOf("px") != value.length - 2) {
-            console.error("Expected a string with a 'px' component")
-            return false
+        const reg = /^-?\d+(\.\d+)?(px|%)$/
+        if (reg.test(value)) {
+            return value
+        } else if (typeof value == "number" || typeof parseFloat(value) == "number") {
+            return parseFloat(value) + "px"
         } else {
-            return true
+            return false
         }
     }
 }

@@ -2,21 +2,20 @@ export default class SVGElement {
     constructor(parameters = {}) {
         this.resizeFunction = this.Resize.bind(this)
         this.clickFunction = this.Click.bind(this)
-        
         this.NameSpace = "http://www.w3.org/2000/svg"
         this.Type = parameters.type
+        this.Label = parameters.label
         
         this.InitiateElement()
         this.Parent = parameters.parent
 
         this.ClickFunction = parameters.onClickFunction
-        this.ClickArguments = parameters.onClickArguments
+        this.ClickArguments = parameters.onClickArguments || []
         
         this.PositionType = "absolute"
         this.ZIndex = "1"
-        this.X = parameters.x
-        this.Y = parameters.y
         this.AutoSize = parameters.autoSize
+        window.addEventListener("resize", this.resizeFunction)
         if (this.AutoSize) {
             this.WidthScale = parameters.widthScale
             this.HeightScale = parameters.heightScale
@@ -28,9 +27,52 @@ export default class SVGElement {
             this.Height = parameters.height
         }
 
+        this.X = parameters.x
+        this.Y = parameters.y
         
-        this.Visible = true
+        if (typeof parameters.visible != "undefined") {
+            this.Visible = parameters.visible
+        } else {
+            this.Visible = true
+        }
         this.PointerEvent = "none"    
+    }
+    get UsingScaleXY() {
+        return /%$/.test(this.X) || /%$/.test(this.Y)
+    }
+    get AbsoluteWidth() {
+        if (/%$/.test(this.Width)) {
+            return parseFloat(this.Width)/100 * window.innerWidth
+        } else {
+            return parseFloat(this.Width)
+        }
+    }
+    get AbsoluteHeight() {
+        if (/%$/.test(this.Height)) {
+            return parseFloat(this.Height)/100 * window.innerHeight
+        } else {
+            return parseFloat(this.Height)
+        }
+    }
+    get AbsoluteX() {
+        if (/%$/.test(this.X)) {
+            return parseFloat(this.X)/100 * window.innerWidth
+        } else {
+            return parseFloat(this.X)
+        }
+    }
+    get AbsoluteY() {
+        if (/%$/.test(this.Y)) {
+            return parseFloat(this.Y)/100 * window.innerHeight
+        } else {
+            return parseFloat(this.Y)
+        }
+    }
+    get Label() {
+        return this.label
+    }
+    set Label(label) {
+        this.label = label
     }
     get PointerEvent() {
         return this.element.getAttribute("pointer-events")
@@ -68,7 +110,9 @@ export default class SVGElement {
             return
         }
         this.parent = Parent
-        this.parent.element.appendChild(this.Element)
+        if (this.ParentElement) {
+            this.ParentElement.appendChild(this.Element)
+        }
     }
     get ParentElement() {
         return this.parent.element
@@ -173,6 +217,8 @@ export default class SVGElement {
             } else {
                 this.element.setAttribute("y", value)
             }
+        } else {
+            console.error("Please provide a valid value for 'y'")
         }
     }
     get PositionType() {
@@ -256,32 +302,36 @@ export default class SVGElement {
         this.ParentElement.appendChild(this.Element)
     }
     Click(evt) {
-        this.ClickFunction.call(this, evt, this.ClickArguments)
+        //console.log("Clicked")
+        if (this.ClickFunction) {
+            this.ClickFunction.call(this, evt, ...this.ClickArguments)
+        }
     } 
     Resize() {
         if (this.AutoSize) {
             this.Width = this.WidthScale * window.innerWidth + "px"
             this.Height = this.HeightScale * window.innerHeight + "px"
         }
+        if (this.UsingScaleXY) {
+            this?.UpdateTransformations()
+        }
     }
     ValidatePX(value) {
-        const reg = /^-?\d+(\.\d+)?(px|%)$/
+        const reg = /^-?\d+(\.\d+)?(px|%)$/ // had to learn regex just for this lol
         if (reg.test(value)) {
             return value
-        } else if (typeof value == "number") {
-            return value + "px"
-        } else if (typeof parseFloat(value) == "number") {
-            return value + "px"
+        } else if (typeof value == "number" || typeof parseFloat(value) == "number") {
+            return parseFloat(value) + "px"
         } else {
-            false
+            return false
         }
     }
     PullForward() {
         this.Remove()
         this.Display()
         if (this.Groups) {
-            for (const [att, val] of Object.entries(this.Groups)) {
-                val.PullForward()
+            for (const [_, group] of Object.entries(this.Groups)) {
+                group.PullForward()
             }
         }
     }

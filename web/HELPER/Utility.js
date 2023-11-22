@@ -9,21 +9,34 @@ export default class Utility {
         const colour = `#${redComponent}${greenComponent}${blueComponent}`
         return colour
     }
-    static Loop(functionToCall, iterations) {
-    if (iterations < 1) {
-        console.error("Iterations must be greater than 0.")
-        return
-    }
-    let i = 0
-    function loop() {
-      functionToCall.call(null, i, iterations)
-      i++
-      if (i < iterations) {
+    static Loop(functionToCall, iterations, calculateFPS) {
+        if (iterations < 1) {
+            console.error("Iterations must be greater than 0.")
+            return
+        }
+
+        let args = arguments
+        const times = []
+        let iterationsPerSecond
+        
+        let i = 0
+        function loop() {
+            if (calculateFPS) {
+                const now = performance.now()
+                while (times.length > 0 && times[0] <= now - 1000) {
+                    times.shift()
+                }
+                times.push(now)
+                iterationsPerSecond = times.length
+            }
+            functionToCall.call(null, i, iterations, iterationsPerSecond, ...Object.values(args).splice(3))
+            i++
+            if (i < iterations) {
+            requestAnimationFrame(loop)
+            }
+        }
         requestAnimationFrame(loop)
-      }
     }
-    requestAnimationFrame(loop)
-  }
     static Hold(parameters = {}) {
         if (typeof parameters.fn !== "function" || !parameters.fn?.call) {
             console.error("Please provide a function that can be called.")
@@ -34,6 +47,6 @@ export default class Utility {
         }, parameters.delay || 0)
     }
 }
-
+// Hold: fn, scope, args, delay
 // Utility.Loop(func, Math.Infinity))
 // Utility.Loop(func2, 100)

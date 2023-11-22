@@ -30,6 +30,20 @@ export default class TAGCanvas extends TAGElement {
     set Fill(colour) {
         this.fillColour = colour
     }
+    get AbsoluteWidth() {
+        if (/%$/.test(this.Width)) {
+            return parseFloat(this.Width)/100 * window.innerWidth
+        } else {
+            return parseFloat(this.Width)
+        }
+    }
+    get AbsoluteHeight() {
+        if (/%$/.test(this.Height)) {
+            return parseFloat(this.Height)/100 * window.innerHeight
+        } else {
+            return parseFloat(this.Height)
+        }
+    }
 
     Draw() {
         this.Background()
@@ -40,7 +54,7 @@ export default class TAGCanvas extends TAGElement {
     Background() {
         this.canvasContext.beginPath()
         this.canvasContext.fillStyle = this.Fill
-        this.canvasContext.fillRect(0, 0, this.Width.slice(0, -2), this.Height.slice(0, -2))
+        this.canvasContext.fillRect(0, 0, this.AbsoluteWidth, this.AbsoluteHeight)
         this.canvasContext.stroke()
     }
 }
