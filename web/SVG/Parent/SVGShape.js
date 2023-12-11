@@ -4,17 +4,19 @@ export default class SVGShape extends SVGElement {
     constructor(parameters = {}) {
         super(parameters)
 
-        if (this.Width != this.Height) {
-            console.warn("Expect some weird behaviour when scaling the rotated shape which is not a square. Use a 1:1 width : height and give a scale instead!")
-        }
+        const scale = this.Width / this.Height
+        this.Height *= scale
 
         this.translationVecXY = [0, 0]
         this.rotationRads = 0
-        this.scaleVecXY = [1, 1]
+        this.scaleVecXY = [1, 1/scale]
 
+        // is the shape draggable with the mouse
         this.Moveable = parameters.moveable || false
+        // will there be end user interactions
         this.TextEditable = parameters.textEditable || false
-        
+
+        // the "_" at the end of the text
         this.UsePlaceholders = parameters.usePlaceholders
         if (typeof this.UsePlaceholders == "undefined") {
             this.UsePlaceholders = true
@@ -68,6 +70,7 @@ export default class SVGShape extends SVGElement {
         } else {
             this.UsingDefaultButtons = false
         }
+        // a button which maps to the dbl click, enables text editing since some browsers don't support dbl click
         if (this.TextEditable) {
             this.PushButton({
                 shape: "ellipse", buttonType: "function",
@@ -83,13 +86,13 @@ export default class SVGShape extends SVGElement {
         this.Fill = parameters.fill
         this.Stroke = parameters.stroke
         this.StrokeWidth = parameters.strokeWidth
-
+        // used before had the button line 74
         //this.dblClickPeriod = 1000
         //this.lastClicked = performance.now() - this.dblClickPeriod
-
+        
         this.LineNumber = 0
         this.CharacterNumber = 0
-        
+        // ensure events are scoped to the object
         this.mouseDownEvent = this.MouseDownEvent.bind(this)
         this.mouseUpEvent = this.MouseUpEvent.bind(this)
         this.clickEvent = this.ClickEvent.bind(this)
@@ -104,16 +107,21 @@ export default class SVGShape extends SVGElement {
 
     }
     Export() {
+        // logs the current shape with its attributes
         console.log(`new ${this.Parent.constructor.name}({label: ${this.Parent.Label}, buttons: ${this.Parent.UsingDefaultButtons}, parent: ${this.Parent.Parent}, width: ${this.Parent.Width}, height: ${this.Parent.Height}, x: ${this.Parent.X}, y: ${this.Parent.Y}, fill: ${this.Parent.Fill}, moveable: ${this.Parent.Moveable}, textEditable: ${this.Parent.TextEditable}, usePlaceholders: ${this.Parent.UsePlaceholders}, pointerEvent: ${this.Parent.PointerEvent}, scale: ${this.Parent.Scale}, rotation: ${this.Parent.Rotation}, translation: [${this.Parent.Translation[0]}, ${this.Parent.Translation[1]}], Fill: ${this.Parent.Fill}, Stroke: ${this.Parent.Stroke}, StrokeWidth: ${this.Parent.StrokeWidth}})`)
-        const xn = parseFloat(this.Parent.AbsoluteX) + this.Parent.Translation[0]
-        const yn = parseFloat(this.Parent.AbsoluteY) + this.Parent.Translation[1]
 
+        
+        const xAbsoluteNew = parseFloat(this.Parent.AbsoluteX) + this.Parent.Translation[0]
+        const yAbsoluteNew = parseFloat(this.Parent.AbsoluteY) + this.Parent.Translation[1]
+
+        // makes the code less verbose
         const c = CRAWLER_RENDERER.GPU.Canvas
 
-        const xn1 = xn / c.AbsoluteWidth * 100
-        const yn1 = yn / c.AbsoluteHeight * 100
-        console.log(`New Position: ${xn}px, ${yn}px`)
-        console.log(`New Position: ${xn1}%, ${yn1}%`)
+        const xRelativeNew = xAbsoluteNew / c.AbsoluteWidth * 100
+        const yRelativeNew = yAbsoluteNew / c.AbsoluteHeight * 100
+        // logs the raw x and y of the current position
+        console.log(`New Position: ${xAbsoluteNew}px, ${yAbsoluteNew}px`)
+        console.log(`New Position: ${xRelativeNew}%, ${yRelativeNew}%`)
     }
     get UsingDefaultButtons() {
         return this.usingDefaultButtons
@@ -127,6 +135,7 @@ export default class SVGShape extends SVGElement {
         const Scale = this.Scale
         const BBoxCenter = this.BBoxCenter
         const matrix = mat2d.create()
+        // widely accepted as the standard
         mat2d.translate(matrix, matrix, [Translation[0]+this.BBoxCenter[0], Translation[1]+this.BBoxCenter[1]])
         mat2d.rotate(matrix, matrix, Rotation)
         mat2d.scale(matrix, matrix, [Scale[0], Scale[1]])
@@ -333,6 +342,7 @@ export default class SVGShape extends SVGElement {
         this.UpdateTransformations()
     }
     ClearText() {
+        // resets the text on the SVG
         this.Text.forEach(text => {
             text.Remove()
         })
@@ -340,12 +350,14 @@ export default class SVGShape extends SVGElement {
         this.LineNumber = 0
         this.CharacterNumber = 0
     }
+    // starts a new line "amount" times with the "details"
     StartNewLine(amount = 1, details) {
         for (let i = 0; i < amount; i++) {
             this.PushTextLine("", details, this.LineNumber+1)
             if (typeof this.Text[this.LineNumber].PlaceholderLocation != "undefined") {
                 this.Text[this.LineNumber].RemovePlaceholder()
             }
+            // update where the user would type
             this.LineNumber ++
             this.CharacterNumber = 0
             this.Text[this.LineNumber].RemovePlaceholder()
@@ -354,6 +366,7 @@ export default class SVGShape extends SVGElement {
             }
         }
     }
+    // writes to the svg, bool for if to start or end on a new line 
     Write(text, startNewLine, endNewLine, details= {}) {
 
         if (this.Text.length==0) {
@@ -363,13 +376,15 @@ export default class SVGShape extends SVGElement {
         if (startNewLine) {
             this.StartNewLine(1, details)
         }
+        // simulates typing ensures the svg is synchronised if the user starts typing on the encoded text
         for (const char of text) {
             this.KeyDownEvent({ key: char, ctrl: false, shift: false, alt: false})
         }
         if (endNewLine) {
-            this.StartNewLine()
+            this.StartNewLine(1, details)
         }
     }
+    // replaces a line with the given text at the given index with the given details
     ReplaceLine(text, index, properties = {}) {
         
         if (this.Text[index]) {
@@ -384,6 +399,7 @@ export default class SVGShape extends SVGElement {
             this.PushTextLine(text, properties, index)
         }
     }
+    // splices a new line with the given text, details at the index
     PushTextLine(text, details={}, index) {
         const Text = this.Classes.text
         const textObject = new Text({
@@ -396,36 +412,46 @@ export default class SVGShape extends SVGElement {
         
         this.UpdateTransformations()
     }
+    // adds text to the current line
     InsertText(text, lineIndex, characterIndex) {
         
         const line = this.Text[lineIndex]
+        // ensures placeholder synchronicity
         if (this.UsePlaceholders) {
             line?.RemovePlaceholder()
         }
         //console.log("LINE:",line)
         //console.log("TEXT:",this.Text)
         line.InsertText(text, characterIndex)
+        
+        // ensures placeholder synchronicity
         if (this.UsePlaceholders) {
             line.AddPlaceholder(characterIndex+1)
         }
     }
+    // adds text at the given line, character index, replacing a certain amount with text
     SpliceText(lineIndex, characterIndex, replaceCount, text="") {
         const line = this.Text[lineIndex]
+        // ensures placeholder synchronicity
         if (this.UsePlaceholders) {
             line.RemovePlaceholder()
         }
         line.SpliceText(text, characterIndex, replaceCount)
+        // ensures placeholder synchronicity
         if (this.UsePlaceholders) {
             line.AddPlaceholder(characterIndex)
         }
     }
     InitialiseGroups() {
         const Group = this.Classes.group
+        // order specifies the render order too, so Misc ontop Text ontop Buttons ontop shape
         this.Groups = {Button: new Group({parent: this.Parent}), Text: new Group({parent: this.Parent}), Misc: new Group({parent: this.Parent})}
     }
     MouseDownEvent(evt) {
         //console.log("Mouse Down")
+        // when clicked, push the svg to the front
         this.PullForward()
+        // turn the bottons on or off
         this.ToggleButtonVisibility()
         this.PreviousMouseX = evt.clientX
         this.PreviousMouseY = evt.clientY
@@ -440,6 +466,7 @@ export default class SVGShape extends SVGElement {
     }
     ClickEvent(evt) {
         //console.log("Click")
+        // legacy from when didnt have the button line 74
         //if (performance.now() - this.lastClicked <= this.dblClickPeriod) {
             //this.DBlClickEvent(evt)
             //this.lastClicked = performance.now() - this.dblClickPeriod
@@ -452,6 +479,7 @@ export default class SVGShape extends SVGElement {
         if (!this.TextEditable) {
             return
         }
+        // ensures there is text svg to type on
         if (this.Text.length==0) {
             this.PushTextLine("", {fontSize:"20px"}, this.LineNumber+1)
         } else {
@@ -467,12 +495,14 @@ export default class SVGShape extends SVGElement {
         }
             
         console.log("Removed event")
+        // hides the placeholder when not typing
         this.Text[this.LineNumber].RemovePlaceholder()
         document.removeEventListener("keydown", this.keyDownEvent)
         document.removeEventListener("dblclick", this.mouseDownDBlClickEvent)
     }
     MouseMoveEvent(evt) {
         //console.log("Mouse Move")
+        // has to be left click
         if (evt.buttons != 1) {
             return
         }
@@ -557,6 +587,7 @@ export default class SVGShape extends SVGElement {
         }
     }
     UpdateTransformations() {
+        // updates the elements positions with the transformations
         this.UpdateMatrix()
         this.UpdateButtons()
         this.UpdateText()
@@ -587,6 +618,7 @@ export default class SVGShape extends SVGElement {
         }
     }
     UpdateMatrix() {
+        // the HTMl of the svg is different so need to change the format before setting
         this.Element.setAttribute("transform", `matrix(${this.RawMatrix.join(' ')})`)
     }
     TurnCompletelyVisibility(visibility) {
@@ -644,7 +676,9 @@ export default class SVGShape extends SVGElement {
         const HeightCWidth = parseFloat(this.Height)/parseFloat(this.Width)
         let rotatedDX
         let rotatedDY
+        // changes based on whether it is height or width heavy.
         if (WidthCHeight < 1) {
+            // standard 2D matrix rotations 
              rotatedDX = (dX*Math.cos(testVar * this.Rotation)-dY*Math.sin(testVar * this.Rotation)) * HeightCWidth
              rotatedDY = (dX*Math.sin(testVar * this.Rotation)+dY*Math.cos(testVar * this.Rotation)) * HeightCWidth
         } else {

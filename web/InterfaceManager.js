@@ -1,3 +1,4 @@
+// Import all files and make the classes global scoped
 // Parent TAG
 import TAGElement from "./TAG/Parent/TAGElement.js"
 // Child TAG

@@ -18,6 +18,7 @@ export default class TAGElement {
         this.PointerLock = parameters.pointerLock
 
         this.Text = parameters.text
+        // so i can use absolute x and y as coords
         this.PositionType = "absolute"
         this.X = parameters.x
         this.Y = parameters.y
@@ -40,6 +41,7 @@ export default class TAGElement {
     }
     set Parent(Parent) {
         if (!Parent) {
+            // sets parent to top level DOM
             this.parent = { element: document.documentElement }
             this.ParentElement.appendChild(this.Element)
             return
@@ -143,7 +145,12 @@ export default class TAGElement {
         this.Element.style.position = type
     }
     get X() {
-        return this.Element.style.left
+        // top level uses CSS, other uses attributes
+        if (this.ParentElement == document.documentElement) {
+            return this.element.style.left
+        } else {
+            return this.element.getAttribute("x")
+        }
     }
     set X(x) {
         if (!x) {
@@ -151,13 +158,19 @@ export default class TAGElement {
         }
         const value = this.ValidateX(x)
         if (value) {
+            // top level uses CSS, other uses attributes
             this.Element.style.left = x
         } else {
             console.error("Please provide a valid value for 'x'")
         }
     }
     get Y() {
-        return this.Element.style.top
+        // top level uses CSS, other uses attributes
+        if (this.ParentElement == document.documentElement) {
+            return this.element.style.top
+        } else {
+            return this.element.getAttribute("y")
+        }
     }
     set Y(y) {
         if (!y) {
@@ -165,6 +178,7 @@ export default class TAGElement {
         }
         const value = this.ValidatePX(y)
         if (value) {
+            // top level uses CSS, other uses attributes
             this.Element.style.top = y
         } else {
             console.error("Please provide a valid value for 'y'")
@@ -219,6 +233,7 @@ export default class TAGElement {
         this.Height = this.heightScale * window.innerHeight + "px"
     }
     DefaultClick() {
+        // browser issue
         console.warn("Pointer Lock has a delay of ~1 second. It will error if you click too quickly.")
         this.Element.requestPointerLock()
     }
@@ -233,7 +248,7 @@ export default class TAGElement {
         this.ParentElement.removeChild(this.Element)
     }
     ValidatePX(value) {
-        const reg = /^-?\d+(\.\d+)?(px|%)$/
+        const reg = /^-?\d+(\.\d+)?(px|%)$/ // https://regexper.com/ 👍
         if (reg.test(value)) {
             return value
         } else if (typeof value == "number" || typeof parseFloat(value) == "number") {

@@ -1,4 +1,5 @@
 export default class Utility {
+    // generate a random colour for RGB 0-255
     static get RandomHexColour() {
         const red = Math.floor(Math.random() * 255)
         const green = Math.floor(Math.random() * 255)
@@ -9,7 +10,9 @@ export default class Utility {
         const colour = `#${redComponent}${greenComponent}${blueComponent}`
         return colour
     }
+    // loops over the given function, for {iterations}, takes a bool for if to calculate the FPS
     static Loop(functionToCall, iterations, calculateFPS) {
+        // Need to ensure iterations are >= 1
         if (iterations < 1) {
             console.error("Iterations must be greater than 0.")
             return
@@ -20,15 +23,19 @@ export default class Utility {
         let iterationsPerSecond
         
         let i = 0
+        // is the actual loop function
         function loop() {
             if (calculateFPS) {
                 const now = performance.now()
+                // while the array is not empty and the first element is less or equal to 1 second ago, shift the array (get rid of first element)
                 while (times.length > 0 && times[0] <= now - 1000) {
                     times.shift()
                 }
+                // adds the current time to the array
                 times.push(now)
                 iterationsPerSecond = times.length
             }
+            // calls with a null scope
             functionToCall.call(null, i, iterations, iterationsPerSecond, ...Object.values(args).splice(3))
             i++
             if (i < iterations) {
@@ -37,7 +44,9 @@ export default class Utility {
         }
         requestAnimationFrame(loop)
     }
+    // delays a function for a given time
     static Hold(parameters = {}) {
+        // makes sure the parameters are passed correctly
         if (typeof parameters.fn !== "function" || !parameters.fn?.call) {
             console.error("Please provide a function that can be called.")
             return
@@ -47,6 +56,3 @@ export default class Utility {
         }, parameters.delay || 0)
     }
 }
-// Hold: fn, scope, args, delay
-// Utility.Loop(func, Math.Infinity))
-// Utility.Loop(func2, 100)

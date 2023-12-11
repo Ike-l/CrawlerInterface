@@ -4,6 +4,7 @@ let cors = require("cors");
 let exp = express();
 exp.use(cors())
 exp.use(express.static('web'))
+// init server
 let web = exp.listen(3000, function() {
   console.log("Running")
 })

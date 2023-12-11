@@ -60,6 +60,7 @@ export default class SVGText extends SVGElement {
         }
     }
     AddPlaceholder(location) {
+        // clamps placeholder to last character since text SVGs cant have spaces anyways
         this.PlaceholderLocation = Math.min(location, this.Text.length)
         this.InsertText("_", this.PlaceholderLocation)
     }
@@ -70,8 +71,10 @@ export default class SVGText extends SVGElement {
         this.Text = this.Text.slice(0, index) + text + this.Text.slice(index)
     }
     SpliceText(text, index, replaceCount) {
+        // converts to array to allow splitting
         const TextArr = Array.from(this.Text)
         TextArr.splice(index, replaceCount, text)
+        // makes it back into a string
         this.Text = TextArr.join("")
     }
     SetPosition(x, y) {

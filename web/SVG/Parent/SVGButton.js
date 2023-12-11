@@ -6,7 +6,7 @@ export default class SVGButton extends SVGElement {
         this.PointerEvent = parameters.pointerEvent || "auto"
         this.ButtonType = parameters.buttonType
         this.ParentElement = parameters.parentElement
-        this.Display() // need this?
+        this.Display() 
         if (this.ButtonType == "scale") {
             this.Direction = parameters.direction
         } else if (this.ButtonType == "slider") {
@@ -27,6 +27,7 @@ export default class SVGButton extends SVGElement {
 
         this.Visible = false
 
+        // ensure the events use the scope of this instance
         this.mouseDownEvent = this.MouseDownEvent.bind(this)
         this.mouseUpEvent = this.MouseUpEvent.bind(this)
         this.clickEvent = this.Click.bind(this)
@@ -37,6 +38,7 @@ export default class SVGButton extends SVGElement {
         this.Element.onclick = this.clickEvent
         this.Element.ondblclick = this.dbClickEvent
     }
+    // sets the center position of the svg
     SetCenter(x, y) {
         this.X = (x - parseFloat(this.Width) / 2) + "px"
         this.Y = (y - parseFloat(this.Height) / 2) + "px"
@@ -45,6 +47,7 @@ export default class SVGButton extends SVGElement {
        // console.log("Mouse Down")
         this.PreviousMouseX = evt.clientX
         this.PreviousMouseY = evt.clientY
+        // used so the object doesnt have to be hovered over like in a previous version
         document.addEventListener("mousemove", this.mouseMoveEvent)
         document.addEventListener("mouseup", this.mouseUpEvent)
     }
@@ -58,9 +61,11 @@ export default class SVGButton extends SVGElement {
     //     console.log("Click")
     // }
     DBClickEvent(evt) {
+        // used to test the event, some browsers have it, some don't
         console.log("Double Click")
     }
     MouseMoveEvent(evt) {
+        // needs to be left click
         if (evt.buttons != 1) {
             return
         }
@@ -81,9 +86,10 @@ export default class SVGButton extends SVGElement {
             const ScaleFactorX = parseFloat(this.Parent.Width) 
             const ScaleFactorY = parseFloat(this.Parent.Height) 
 
-            
+            // scale factor
             let sfX 
             let xOffset = 0
+            // if the slider is horizontal
             if (Math.abs(this.EndPosition.x - this.StartPosition.x) > 0) {
                 sfX = 1
             } else {
@@ -92,24 +98,26 @@ export default class SVGButton extends SVGElement {
             }
             let sfY
             let yOffset = 0
+            // if the slider is vertical
             if (Math.abs(this.EndPosition.y - this.StartPosition.y) > 0) {
                 sfY = 1
             } else {
                 sfY = 0
                 yOffset = this.StartPosition.y
             }
-            
+            // start X/Y relative position
              const SX = parseFloat(this.Width)/2 / (this.Parent.Scale[0] * parseFloat(this.Parent.Width))
              const SY = parseFloat(this.Height)/2 / (this.Parent.Scale[1] * parseFloat(this.Parent.Height))
              this.StartPosition.x = (SX + this.InitialStart.x) * sfX + xOffset
              this.StartPosition.y = (SY + this.InitialStart.y) * sfY + yOffset
-
+            // end X/Y relative position
             this.EndPosition.x = (this.InitialEnd.x-SX) * sfX + xOffset
             this.EndPosition.y = (this.InitialEnd.y-SY) * sfY + yOffset
+
             
             const adjustedMovementX = (movementX/ScaleFactorX)/this.Parent.Scale[0]
             const adjustedMovementY = (movementY/ScaleFactorY)/this.Parent.Scale[1]
-            
+            // clamping ensures it stays within specified bounds
             this.RelativePosition = [
                 Math.min(
                     Math.max(
@@ -127,7 +135,7 @@ export default class SVGButton extends SVGElement {
             ]
             const value = this.EndPosition.value - this.StartPosition.value
 
-           
+           // gets the value based on the position
             this.ValueX = ((value * (this.RelativePosition[0] - this.StartPosition.x)) / (this.EndPosition.x - this.StartPosition.x)) - (Math.abs(this.StartPosition.value))
             this.ValueY = ((value * (this.RelativePosition[1] - this.StartPosition.y)) / (this.EndPosition.y - this.StartPosition.y)) //- 0.5*(this.StartPosition.Value + this.EndPosition.Value)
             this.ValueXY = ((this.ValueX/value)**2+(this.ValueY/value)**2)**0.5 / 2**0.5
@@ -154,6 +162,7 @@ export default class SVGButton extends SVGElement {
        // console.log("Mouse Move Button")
     }
     getAngle(movementX, movementY) {
+        // caclulates the angle based on the previous position and current position
         const centerPoint = this.Parent.Center
         const oldPoint = vec2.fromValues(this.PreviousMouseX, this.PreviousMouseY)
         const oldPointDirection = vec2.create()

@@ -1,5 +1,6 @@
 export default class SVGElement {
     constructor(parameters = {}) {
+        // ensure scope
         this.resizeFunction = this.Resize.bind(this)
         this.clickFunction = this.Click.bind(this)
         this.NameSpace = "http://www.w3.org/2000/svg"
@@ -11,7 +12,7 @@ export default class SVGElement {
 
         this.ClickFunction = parameters.onClickFunction
         this.ClickArguments = parameters.onClickArguments || []
-        
+        // so i can use x, y as coords
         this.PositionType = "absolute"
         this.ZIndex = "1"
         this.AutoSize = parameters.autoSize
@@ -38,9 +39,12 @@ export default class SVGElement {
         this.PointerEvent = "none"    
     }
     get UsingScaleXY() {
+        // checks for a "%" at the end of the string
         return /%$/.test(this.X) || /%$/.test(this.Y)
     }
     get AbsoluteWidth() {
+        
+        // checks for a "%" at the end of the string
         if (/%$/.test(this.Width)) {
             return parseFloat(this.Width)/100 * window.innerWidth
         } else {
@@ -48,6 +52,7 @@ export default class SVGElement {
         }
     }
     get AbsoluteHeight() {
+        // checks for a "%" at the end of the string
         if (/%$/.test(this.Height)) {
             return parseFloat(this.Height)/100 * window.innerHeight
         } else {
@@ -55,6 +60,7 @@ export default class SVGElement {
         }
     }
     get AbsoluteX() {
+        // checks for a "%" at the end of the string
         if (/%$/.test(this.X)) {
             return parseFloat(this.X)/100 * window.innerWidth
         } else {
@@ -62,6 +68,7 @@ export default class SVGElement {
         }
     }
     get AbsoluteY() {
+        // checks for a "%" at the end of the string
         if (/%$/.test(this.Y)) {
             return parseFloat(this.Y)/100 * window.innerHeight
         } else {
@@ -97,6 +104,7 @@ export default class SVGElement {
     }
     set Parent(Parent) {
         if (!Parent) {
+            // sets parent to top level DOM
             this.Parent = { element: document.documentElement }
             this.ParentElement.appendChild(this.Element)
             return
@@ -180,6 +188,7 @@ export default class SVGElement {
         }
     }
     get X() {
+        // top level uses CSS, other uses attributes
         if (this.ParentElement == document.documentElement) {
             return this.element.style.left
         } else {
@@ -192,6 +201,7 @@ export default class SVGElement {
         }
         const value = this.ValidatePX(x)
         if (value) {
+        // top level uses CSS, other uses attributes
             if (this.ParentElement == document.documentElement) {
                 this.element.style.left = value
             } else {
@@ -200,6 +210,7 @@ export default class SVGElement {
         }
     }
     get Y() {
+        // top level uses CSS, other uses attributes
         if (this.ParentElement == document.documentElement) {
             return this.element.style.top
         } else {
@@ -212,6 +223,7 @@ export default class SVGElement {
         }
         const value = this.ValidatePX(y)
         if (value) {
+        // top level uses CSS, other uses attributes
             if (this.ParentElement == document.documentElement) {
                 this.element.style.top = value
             } else {
@@ -256,6 +268,7 @@ export default class SVGElement {
     set ClickArguments(newArguments) {
         this.onClickArguments = newArguments
     }
+    // the smallest rectangle able to encapsulate the svg where the shape is without transformations
     get BBox() {
         return this.Element.getBBox()
     }
@@ -264,10 +277,10 @@ export default class SVGElement {
         return [bbox.x + bbox.width / 2, bbox.y + bbox.height / 2]
     }
     get Center() {
-        const a = vec2.fromValues(this.BBoxCenter[0], this.BBoxCenter[1])
-        const b = vec2.create()
-        vec2.transformMat2d(b, a, this.RawMatrix)
-        return b
+        const rawCenter = vec2.fromValues(this.BBoxCenter[0], this.BBoxCenter[1])
+        const transformedCenter = vec2.create()
+        vec2.transformMat2d(transformedCenter, rawCenter, this.RawMatrix)
+        return transformedCenter
     }
     get Visible() {
         return this.Element.style.visibility == "visible"
@@ -317,7 +330,7 @@ export default class SVGElement {
         }
     }
     ValidatePX(value) {
-        const reg = /^-?\d+(\.\d+)?(px|%)$/ // had to learn regex just for this lol
+        const reg = /^-?\d+(\.\d+)?(px|%)$/ // https://regexper.com/ 👍
         if (reg.test(value)) {
             return value
         } else if (typeof value == "number" || typeof parseFloat(value) == "number") {
@@ -326,10 +339,12 @@ export default class SVGElement {
             return false
         }
     }
+    // removes and re adds the svg to make it look on top of others
     PullForward() {
         this.Remove()
         this.Display()
         if (this.Groups) {
+            // also needs to do it for any buttons or text (text ontop buttons ontop shape)
             for (const [_, group] of Object.entries(this.Groups)) {
                 group.PullForward()
             }

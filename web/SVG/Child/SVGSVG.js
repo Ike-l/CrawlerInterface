@@ -9,12 +9,12 @@ export default class SVGSVG extends SVGElement {
         if (parameters.objects) {
             this.Objects = parameters.objects
         }
-        // objects buffer
     }
     get Objects() {
         return this.objectBuffer
     }
     set Objects(objects) {
+        // ensure the parameter is an array so the spread syntax doesnt error
         if (objects instanceof Array) {
             this.objectBuffer.push(...objects)
         } else {

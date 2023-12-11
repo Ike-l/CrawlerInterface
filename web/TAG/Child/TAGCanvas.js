@@ -31,6 +31,7 @@ export default class TAGCanvas extends TAGElement {
         this.fillColour = colour
     }
     get AbsoluteWidth() {
+        // checks if the attribute is absolute or relative
         if (/%$/.test(this.Width)) {
             return parseFloat(this.Width)/100 * window.innerWidth
         } else {
@@ -38,6 +39,7 @@ export default class TAGCanvas extends TAGElement {
         }
     }
     get AbsoluteHeight() {
+        // checks if the attribute is absolute or relative
         if (/%$/.test(this.Height)) {
             return parseFloat(this.Height)/100 * window.innerHeight
         } else {
@@ -52,6 +54,7 @@ export default class TAGCanvas extends TAGElement {
         })
     }
     Background() {
+        // fills the background / resets the drawing
         this.canvasContext.beginPath()
         this.canvasContext.fillStyle = this.Fill
         this.canvasContext.fillRect(0, 0, this.AbsoluteWidth, this.AbsoluteHeight)
